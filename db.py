@@ -2,7 +2,7 @@ import sqlite3
 
 DB_NAME = "bot.db"
 
-# ایجاد جدول‌ها (فقط یک بار اجرا میشه در هر تابع در صورت نیاز)
+# ایجاد جدول‌ها (فقط یک بار اجرا میشه)
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -31,7 +31,6 @@ def init_db():
 
 # مدیریت کاربران
 def add_or_update_user(user_id, full_name, username, field, grade, province, city):
-    init_db()
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
@@ -66,7 +65,6 @@ def remove_coins(user_id, amount):
 
 # مدیریت سوالات
 def add_question(user_id, question_text):
-    init_db()
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
