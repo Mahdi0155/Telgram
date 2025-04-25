@@ -43,6 +43,39 @@ def is_username_taken(username):
     cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
     return cursor.fetchone() is not None
 
+# ایجاد جدول سوالات (اگر وجود نداشت)
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS questions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        question TEXT,
+        answer TEXT DEFAULT NULL,
+        answered BOOLEAN DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+''')
+conn.commit()
+
+# ذخیره سوال جدید
+def save_question(user_id, question_text):
+    cursor.execute('INSERT INTO questions (user_id, question) VALUES (?, ?)', (user_id, question_text))
+    conn.commit()
+
+# گرفتن سوالات پاسخ‌داده‌نشده
+def get_unanswered_questions():
+    cursor.execute('SELECT * FROM questions WHERE answered = 0')
+    return cursor.fetchall()
+
+# ثبت پاسخ به سوال
+def answer_question(question_id, answer_text):
+    cursor.execute('UPDATE questions SET answer = ?, answered = 1 WHERE id = ?', (answer_text, question_id))
+    conn.commit()
+
+# گرفتن سوالات یک کاربر خاص (مثلا برای نمایش تاریخچه)
+def get_user_questions(user_id):
+    cursor.execute('SELECT * FROM questions WHERE user_id = ?', (user_id,))
+    return cursor.fetchall()
+
 # اضافه کردن سکه به کاربر
 def add_coins(user_id, amount):
     cursor.execute('UPDATE users SET coins = coins + ? WHERE user_id = ?', (amount, user_id))
