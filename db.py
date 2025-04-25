@@ -1,82 +1,18 @@
 import sqlite3
 
-# اتصال به دیتابیس
-conn = sqlite3.connect("database.db")
-cursor = conn.cursor()
+def connect_db(): return sqlite3.connect("bot.db")
 
-# ساخت جدول کاربران (اگر وجود نداشت)
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER UNIQUE NOT NULL,
-    username TEXT,
-    grade TEXT,
-    field TEXT,
-    province TEXT,
-    city TEXT,
-    coins INTEGER DEFAULT 0
-)
-''')
+مدیریت کاربران
 
-# ساخت جدول سوالات (اگر وجود نداشت)
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS questions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    question TEXT NOT NULL,
-    answer TEXT
-)
-''')
+def add_or_update_user(user_id, full_name, username, grade, major, province, city): conn = connect_db() cursor = conn.cursor() cursor.execute(""" INSERT INTO users (id, full_name, username, grade, major, province, city, coins) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET full_name=excluded.full_name, username=excluded.username, grade=excluded.grade, major=excluded.major, province=excluded.province, city=excluded.city """, (user_id, full_name, username, grade, major, province, city, 0)) conn.commit() conn.close()
 
-conn.commit()
+def is_username_taken(username): conn = connect_db() cursor = conn.cursor() cursor.execute("SELECT id FROM users WHERE username = ?", (username,)) result = cursor.fetchone() conn.close() return result is not None
 
-# ثبت یا به‌روزرسانی کاربر
-def add_or_update_user(user_id, username, grade, field, province, city):
-    cursor.execute('''
-        INSERT INTO users (user_id, username, grade, field, province, city)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(user_id) DO UPDATE SET
-            username=excluded.username,
-            grade=excluded.grade,
-            field=excluded.field,
-            province=excluded.province,
-            city=excluded.city
-    ''', (user_id, username, grade, field, province, city))
-    conn.commit()
+مدیریت سوالات
 
-# دریافت اطلاعات کاربر
-def get_user(user_id):
-    cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
-    return cursor.fetchone()
+def add_question(user_id, text): conn = connect_db() cursor = conn.cursor() cursor.execute("INSERT INTO questions (user_id, question) VALUES (?, ?)", (user_id, text)) conn.commit() conn.close()
 
-# اضافه کردن سکه
-def add_coins(user_id, amount):
-    cursor.execute('UPDATE users SET coins = coins + ? WHERE user_id = ?', (amount, user_id))
-    conn.commit()
+def get_unanswered_questions(): conn = connect_db() cursor = conn.cursor() cursor.execute("SELECT id, question FROM questions WHERE answer IS NULL") questions = cursor.fetchall() conn.close() return questions
 
-# کم کردن سکه
-def deduct_coins(user_id, amount):
-    cursor.execute('UPDATE users SET coins = coins - ? WHERE user_id = ?', (amount, user_id))
-    conn.commit()
+def answer_question(question_id, answer_text): conn = connect_db() cursor = conn.cursor() cursor.execute("UPDATE questions SET answer = ? WHERE id = ?", (answer_text, question_id)) conn.commit() success = cursor.rowcount > 0 conn.close() return success
 
-# گرفتن تعداد سکه‌های کاربر
-def get_coins(user_id):
-    cursor.execute('SELECT coins FROM users WHERE user_id = ?', (user_id,))
-    result = cursor.fetchone()
-    return result[0] if result else 0
-
-# ثبت سوال جدید
-def add_question(user_id, question):
-    cursor.execute('INSERT INTO questions (user_id, question) VALUES (?, ?)', (user_id, question))
-    conn.commit()
-
-# گرفتن سوالات بی‌پاسخ
-def get_unanswered_questions():
-    cursor.execute('SELECT id, question FROM questions WHERE answer IS NULL')
-    return cursor.fetchall()
-
-# پاسخ دادن به سوال
-def answer_question(question_id, answer_text):
-    cursor.execute('UPDATE questions SET answer = ? WHERE id = ? AND answer IS NULL', (answer_text, question_id))
-    conn.commit()
-    return cursor.rowcount > 0
