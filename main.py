@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums.parse_mode import ParseMode
-from handlers import start, profile, percent, study, help, coins
+from handlers import start, profile, percent, study, help, coins, ask_question  # اینجا اضافه شد
 from admin import panel
 from dotenv import load_dotenv
 import os
@@ -19,6 +19,7 @@ dp.include_routers(
     study.router,
     help.router,
     coins.router,
+    ask_question.router,  # اینجا اضافه شد
     panel.router,
 )
 
