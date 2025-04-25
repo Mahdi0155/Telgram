@@ -18,8 +18,9 @@ async def start_command(message: Message):
         )
     else:
         await message.answer(
-            "سلام! به ربات مشاوره‌ای خوش اومدی! {chr(0x1F4DA)}\n"
+            f"سلام! به ربات مشاوره‌ای خوش اومدی! {chr(0x1F4DA)}\n"
             "بیا اول یه پروفایل برات بسازیم تا بتونی از امکانات ربات استفاده کنی:",
+            reply_markup=main_menu_keyboard()
         )
         from handlers import profile
         await profile.start_registration(message)
