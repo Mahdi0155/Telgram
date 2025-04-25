@@ -1,35 +1,44 @@
-from aiogram import Router, types
-from db import get_all_unanswered_questions, answer_question, mark_question_as_answered
+from aiogram import Router, F
+from aiogram.types import Message
+from db import get_unanswered_questions, answer_question
 
 router = Router()
 
-ADMIN_ID = 6387942633  # آیدی تلگرام ادمین اصلی
+ADMIN_ID = 6387942633  # آیدی عددی تلگرام ادمین
 
-@router.message(lambda message: message.from_user.id == ADMIN_ID and message.text == "/admin")
-async def admin_panel(message: types.Message):
-    questions = get_all_unanswered_questions()
+@router.message(F.text == "پنل ادمین")
+async def admin_panel(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("شما دسترسی به پنل ادمین ندارید.")
+        return
+
+    questions = get_unanswered_questions()
     if not questions:
-        await message.answer("هیچ سوال پاسخ داده نشده‌ای وجود ندارد.")
+        await message.answer("هیچ سوال بی‌پاسخی وجود ندارد.")
         return
 
+    response = "سوالات بدون پاسخ:\n\n"
     for q in questions:
-        question_id, user_id, question_text = q
-        await message.answer(f"سوال #{question_id} از کاربر {user_id}:\n\n{question_text}")
+        response += f"آیدی سوال: {q[0]}\nسوال: {q[1]}\n\n"
 
-@router.message(lambda message: message.from_user.id == ADMIN_ID and message.text.startswith("جواب"))
-async def send_answer(message: types.Message):
-    try:
-        _, qid, *answer_parts = message.text.split()
-        qid = int(qid)
-        answer_text = " ".join(answer_parts)
-    except Exception as e:
-        await message.answer("فرمت پاسخ اشتباهه. باید اینطوری باشه:\nجواب [ایدی سوال] [متن پاسخ]")
+    await message.answer(response)
+
+@router.message(F.text.startswith("پاسخ "))
+async def answer_to_question(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("شما دسترسی به پنل ادمین ندارید.")
         return
 
-    user_id = answer_question(qid, answer_text)
-    if user_id:
-        await message.bot.send_message(user_id, f"پاسخ سوال شما:\n{answer_text}")
-        mark_question_as_answered(qid)
-        await message.answer("✅ پاسخ ارسال شد.")
+    try:
+        parts = message.text.split(' ', 2)
+        question_id = int(parts[1])
+        answer_text = parts[2]
+    except (IndexError, ValueError):
+        await message.answer("فرمت درست: پاسخ [آیدی سوال] [متن پاسخ]")
+        return
+
+    success = answer_question(question_id, answer_text)
+    if success:
+        await message.answer("پاسخ با موفقیت ثبت شد.")
     else:
-        await message.answer("❌ سوال پیدا نشد یا قبلاً پاسخ داده شده.")
+        await message.answer("مشکلی پیش آمد یا سوال پیدا نشد.")
