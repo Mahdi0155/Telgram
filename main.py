@@ -6,6 +6,8 @@ from admin import panel
 from dotenv import load_dotenv
 import os
 
+from db import init_db  # این خط اضافه میشه
+
 load_dotenv()
 
 bot = Bot(token=os.getenv("BOT_TOKEN"), parse_mode=ParseMode.HTML)
@@ -23,6 +25,7 @@ dp.include_routers(
 )
 
 async def main():
+    init_db()  # این خط اضافه میشه
     print("ربات آماده است...")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
