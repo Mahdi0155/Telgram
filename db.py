@@ -1,59 +1,54 @@
 import sqlite3
 
-# اتصال به دیتابیس یا ساخت فایل اگر وجود نداشته باشه
-def connect_db():
-    conn = sqlite3.connect('database.db')
-    cur = conn.cursor()
-    
-    # ساخت جدول کاربران اگر وجود نداشت
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            telegram_id INTEGER UNIQUE,
-            username TEXT UNIQUE,
-            major TEXT,
-            grade TEXT,
-            province TEXT,
-            city TEXT,
-            coins INTEGER DEFAULT 0
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
+# اتصال به دیتابیس (اگر نبود ایجاد میشه)
+conn = sqlite3.connect('users.db', check_same_thread=False)
+cursor = conn.cursor()
 
-# اضافه کردن کاربر جدید
-def add_user(telegram_id, username, major, grade, province, city, coins=5):
-    conn = sqlite3.connect('database.db')
-    cur = conn.cursor()
-    cur.execute('''
-        INSERT OR IGNORE INTO users (telegram_id, username, major, grade, province, city, coins)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (telegram_id, username, major, grade, province, city, coins))
+# ایجاد جدول کاربران
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE,
+        full_name TEXT,
+        grade TEXT,
+        major TEXT,
+        province TEXT,
+        city TEXT,
+        username TEXT UNIQUE,
+        coins INTEGER DEFAULT 0
+    )
+''')
+conn.commit()
+
+# افزودن یا آپدیت کاربر
+def add_or_update_user(user_id, full_name):
+    cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    user = cursor.fetchone()
+    if user is None:
+        cursor.execute('INSERT INTO users (user_id, full_name) VALUES (?, ?)', (user_id, full_name))
+        conn.commit()
+
+# به‌روزرسانی فیلد خاصی
+def update_user_field(user_id, field, value):
+    cursor.execute(f'UPDATE users SET {field} = ? WHERE user_id = ?', (value, user_id))
     conn.commit()
-    conn.close()
 
 # گرفتن اطلاعات کاربر
-def get_user(telegram_id):
-    conn = sqlite3.connect('database.db')
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,))
-    user = cur.fetchone()
-    conn.close()
-    return user
+def get_user(user_id):
+    cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    return cursor.fetchone()
 
-# آپدیت کردن تعداد سکه های کاربر
-def update_coins(telegram_id, coins):
-    conn = sqlite3.connect('database.db')
-    cur = conn.cursor()
-    cur.execute('UPDATE users SET coins = ? WHERE telegram_id = ?', (coins, telegram_id))
-    conn.commit()
-    conn.close()
+# چک کردن تکراری نبودن یوزرنیم
+def is_username_taken(username):
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+    return cursor.fetchone() is not None
 
-# کم کردن یک سکه از کاربر
-def decrease_coin(telegram_id):
-    conn = sqlite3.connect('database.db')
-    cur = conn.cursor()
-    cur.execute('UPDATE users SET coins = coins - 1 WHERE telegram_id = ?', (telegram_id,))
+# اضافه کردن سکه به کاربر
+def add_coins(user_id, amount):
+    cursor.execute('UPDATE users SET coins = coins + ? WHERE user_id = ?', (amount, user_id))
     conn.commit()
-    conn.close()
+
+# کم کردن سکه از کاربر
+def remove_coins(user_id, amount):
+    cursor.execute('UPDATE users SET coins = coins - ? WHERE user_id = ?', (amount, user_id))
+    conn.commit()
