@@ -65,14 +65,15 @@ async def get_username(message: Message, state: FSMContext):
     data = await state.get_data()
     add_or_update_user(
         message.from_user.id,
+        message.from_user.full_name,
         username,
-        data["grade"],
         data["major"],
+        data["grade"],
         data["province"],
         data["city"]
     )
 
-    await message.answer("پروفایلت با موفقیت ساخته شد و ۵ سکه هدیه گرفتی! {0}".format(chr(0x1F381)))
+    await message.answer("پروفایلت با موفقیت ساخته شد و ۵ سکه هدیه گرفتی! " + chr(0x1F381))
     await message.answer("از منوی زیر استفاده کن:", reply_markup=main_menu_keyboard())
 
     await state.clear()
