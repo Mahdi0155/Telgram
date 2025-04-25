@@ -1,15 +1,16 @@
 import asyncio
+import os
 from aiogram import Bot, Dispatcher
 from aiogram.enums.parse_mode import ParseMode
 from handlers import start, profile, percent, study, coins, ask_question
 from admin import panel
 from dotenv import load_dotenv
-import os
+from db import init_db
 
-from db import init_db  # این خط اضافه میشه
-
+# Load environment variables
 load_dotenv()
 
+# Initialize bot and dispatcher
 bot = Bot(token=os.getenv("BOT_TOKEN"), parse_mode=ParseMode.HTML)
 dp = Dispatcher()
 
@@ -25,7 +26,7 @@ dp.include_routers(
 )
 
 async def main():
-    init_db()  # این خط اضافه میشه
+    init_db()
     print("ربات آماده است...")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
