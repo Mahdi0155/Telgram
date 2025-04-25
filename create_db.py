@@ -1,40 +1,35 @@
 # create_db.py
-
 import sqlite3
 
-# اتصال به دیتابیس (اگه وجود نداشته باشه، خودش میسازه)
-conn = sqlite3.connect('data.db')  # یا هر اسمی که در پروژه استفاده کردی
-
+conn = sqlite3.connect("bot.db")
 cursor = conn.cursor()
 
-# ساخت جدول users
+# جدول کاربران
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER UNIQUE,
-    username TEXT,
-    field TEXT,
+    full_name TEXT,
     grade TEXT,
+    major TEXT,
     province TEXT,
     city TEXT,
-    coins INTEGER DEFAULT 0,
-    free_coins INTEGER DEFAULT 0,
-    invited_by INTEGER
+    username TEXT UNIQUE,
+    coins INTEGER DEFAULT 0
 )
 ''')
 
-# ساخت جدول questions
+# جدول سوالات
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
-    question_text TEXT,
-    answer_text TEXT,
-    status TEXT DEFAULT 'pending'
+    question TEXT,
+    answer TEXT DEFAULT NULL
 )
 ''')
 
 conn.commit()
 conn.close()
 
-print("Database and tables created successfully!")
+print("Database created successfully.")
