@@ -1,55 +1,48 @@
-from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import BotCommand
-import asyncio
-import logging
+import os
+from aiogram import Bot, Dispatcher, executor, types
+from db import create_tables, get_session, User
+from config import ADMIN_ID
 
-from config import BOT_TOKEN
-from handlers import profile  # هندلرهایی که ساختی
-from db import create_tables
+# توکن ربات از محیط یا مستقیم
+BOT_TOKEN = os.getenv('BOT_TOKEN')  # روی رندر باید ENV بسازی به اسم BOT_TOKEN
+if not BOT_TOKEN:
+    BOT_TOKEN = 'اینجا توکن رباتتو بذار'
 
-# فعال‌سازی لاگ‌ها
-logging.basicConfig(level=logging.INFO)
-
-# راه‌اندازی ربات
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher(storage=MemoryStorage())
+dp = Dispatcher(bot)
 
-# افزودن هندلرها
-dp.include_router(profile.router)
+# ساختن دیتابیس
+create_tables()
 
-# تعریف دستورات پیش‌فرض
-async def set_commands(bot: Bot):
-    commands = [
-        BotCommand(command="/start", description="شروع ربات"),
-    ]
-    await bot.set_my_commands(commands)
+# شروع ربات
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    session = get_session()
+    user = session.query(User).filter_by(id=message.from_user.id).first()
 
-# تابع اصلی اجرا
-async def main():
-    await set_commands(bot)
-    create_tables()  # ساخت جدول‌های دیتابیس
-    await dp.start_polling(bot)
+    if not user:
+        new_user = User(
+            id=message.from_user.id,
+            username=message.from_user.username,
+            coins=5,  # سکه اولیه مثلا
+            grade="",
+            major="",
+            province="",
+            city=""
+        )
+        session.add(new_user)
+        session.commit()
+        await message.answer("سلام! ثبت‌نامت انجام شد!")
+    else:
+        await message.answer("قبلا ثبت‌نام کردی!")
 
-if __name__ == "__main__":
-    import threading
-    import os
-    from http.server import BaseHTTPRequestHandler, HTTPServer
+    session.close()
 
-    # اجرای سرور فیک برای رفع مشکل Render
-    class SimpleHandler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'Bot is running')
+# تست پیام ساده
+@dp.message_handler(commands=['help'])
+async def help_command(message: types.Message):
+    await message.answer("دستورات موجود:\n/start - شروع\n/help - راهنما")
 
-    def run_fake_server():
-        port = int(os.environ.get("PORT", 8080))
-        server = HTTPServer(("0.0.0.0", port), SimpleHandler)
-        server.serve_forever()
-
-    # اجرای سرور فیک در یک ترد جدا
-    threading.Thread(target=run_fake_server).start()
-
-    # اجرای اصلی ربات
-    asyncio.run(main())
+# اجرای ربات
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
