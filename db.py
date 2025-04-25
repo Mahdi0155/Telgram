@@ -79,3 +79,12 @@ def get_user(user_id):
     user = cursor.fetchone()
     conn.close()
     return user
+
+import sqlite3
+
+def remove_coins(user_id, amount):
+    conn = sqlite3.connect("bot.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET coins = coins - ? WHERE id = ?", (amount, user_id))
+    conn.commit()
+    conn.close()
