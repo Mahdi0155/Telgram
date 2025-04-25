@@ -10,12 +10,12 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY,
             full_name TEXT,
-            username TEXT,
+            username TEXT UNIQUE,
             field TEXT,
             grade TEXT,
             province TEXT,
             city TEXT,
-            coins INTEGER DEFAULT 0
+            coins INTEGER DEFAULT 5
         )
     ''')
     cursor.execute('''
@@ -34,8 +34,8 @@ def add_or_update_user(user_id, full_name, username, field, grade, province, cit
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT OR REPLACE INTO users (id, full_name, username, field, grade, province, city)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO users (id, full_name, username, field, grade, province, city, coins)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 5)
     ''', (user_id, full_name, username, field, grade, province, city))
     conn.commit()
     conn.close()
