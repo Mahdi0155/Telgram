@@ -71,6 +71,39 @@ def answer_question(question_id, answer_text):
     cursor.execute('UPDATE questions SET answer = ?, answered = 1 WHERE id = ?', (answer_text, question_id))
     conn.commit()
 
+# ایجاد جدول سوالات
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS questions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        subject TEXT,
+        question_text TEXT,
+        answer_text TEXT DEFAULT NULL
+    )
+''')
+conn.commit()
+
+# افزودن سوال جدید
+def add_question(user_id, subject, question_text):
+    cursor.execute('INSERT INTO questions (user_id, subject, question_text) VALUES (?, ?, ?)',
+                   (user_id, subject, question_text))
+    conn.commit()
+
+# گرفتن سوالات بدون پاسخ
+def get_unanswered_questions():
+    cursor.execute('SELECT * FROM questions WHERE answer_text IS NULL')
+    return cursor.fetchall()
+
+# پاسخ دادن به سوال
+def answer_question(question_id, answer_text):
+    cursor.execute('UPDATE questions SET answer_text = ? WHERE id = ?', (answer_text, question_id))
+    conn.commit()
+
+# گرفتن سوالات یک کاربر خاص
+def get_user_questions(user_id):
+    cursor.execute('SELECT * FROM questions WHERE user_id = ?', (user_id,))
+    return cursor.fetchall()
+
 # گرفتن سوالات یک کاربر خاص (مثلا برای نمایش تاریخچه)
 def get_user_questions(user_id):
     cursor.execute('SELECT * FROM questions WHERE user_id = ?', (user_id,))
