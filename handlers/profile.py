@@ -3,7 +3,6 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from keyboards.reply import main_menu_keyboard
 from db import get_user
-from handlers import profile
 
 router = Router()
 
@@ -23,4 +22,7 @@ async def start_command(message: Message, state: FSMContext):
             "سلام! به ربات مشاوره‌ای خوش اومدی! 📚\n"
             "بیا اول یه پروفایل برات بسازیم تا بتونی از امکانات ربات استفاده کنی:"
         )
-        await profile.start_registration(message, state)
+        await start_registration(message, state)
+
+async def start_registration(message: Message, state: FSMContext):
+    await message.answer("ثبت نام شروع شد! لطفا اطلاعاتتو وارد کن...")
